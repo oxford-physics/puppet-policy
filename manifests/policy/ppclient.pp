@@ -1,10 +1,8 @@
 #this class is to hold all the  desktops, servers, interactive machines that are clients of the pp system
-class applypolicy::policy::ppclient {
+class applypolicy::policy::ppclient ($autodatalocation = $pp_client::params::autodatalocation )  inherits pp_client::params {
 
-
-
-  class { 'lustre_client': }
-
+  include 'lustre_client'
+  
   file { '/etc/auto.pplxfs':
       ensure  => present,
       source  => $autodatalocation,
