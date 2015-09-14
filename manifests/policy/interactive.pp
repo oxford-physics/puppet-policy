@@ -7,7 +7,7 @@ class applypolicy::policy::interactive
 
   file {'/bin/fusermount':
          require => Package ['fuse'],
-         mode=>4750,
+         mode=>4755,
          owner=>root,
          group=>fuse,
          ensure=>present
@@ -16,6 +16,5 @@ class applypolicy::policy::interactive
 
   $admin_package_list = [ "cifs-utils", "samba-common", "samba", "krb5-workstation" ]
   ensure_packages ( $admin_package_list  )
-
 }
 

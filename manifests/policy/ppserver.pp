@@ -3,11 +3,12 @@ class applypolicy::policy::ppserver {
 
 #Monitoring
   include "ganglia::client"
+#
   include collectl
 
 #Auth
 
-  class { 'rsyslog' : }
-  include nrpe
+  include rsyslog
+#  include nrpe
 
 }

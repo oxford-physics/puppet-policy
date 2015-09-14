@@ -15,10 +15,20 @@ $autofs_defaults = {
                'name' => 'autofs'
                }
 }
-
-
 if ! defined(Service['autofs']) {
-       create_resources("service",  $autofs_defaults )
+
+@service { autofs : 
+     ensure     => running,
+               hasstatus  => true,
+               hasrestart => true,
+               enable     => true,
+               require    => [Package['autofs']],
+               name => 'autofs'          
+
+}
+
+realize Service['autofs']
+
 }
 
 
