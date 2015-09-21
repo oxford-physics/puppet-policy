@@ -6,17 +6,20 @@ class applypolicy::policy::ppsoftware {
 
  include user_software::pp_base
  include 'motd'
+ #Detect ec2 instance / otherwise assume hardware...
+ #TODO, make this better, really we should detect if there is an ipmi card present rather than the definate absense of one
  if ec2_metadata == undef  {
    ensure_packages ( ["OpenIPMI"] )
  }
 
- file { '/etc/cvmfs' : ensure => directory,      owner   => 'root',
-      group   => 'root',      mode    => '0755',
- }
- file { '/etc/cvmfs/keys/' : ensure => directory,      owner   => 'root',
-      group   => 'root',      mode    => '0755',
-      require => File['/etc/cvmfs/']
- }
+
+# file { '/etc/cvmfs' : ensure => directory,      owner   => 'root',
+#      group   => 'root',      mode    => '0755',
+# }
+# file { '/etc/cvmfs/keys/' : ensure => directory,      owner   => 'root',
+#      group   => 'root',      mode    => '0755',
+#      require => File['/etc/cvmfs/']
+# }
 
 
   file { '/etc/cron.daily/cvmfs_fsck.sh': 

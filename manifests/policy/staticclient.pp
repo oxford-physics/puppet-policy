@@ -23,17 +23,11 @@ include 'yumbase'
 include "access::access_wrapper"
 #Why not? it makes everything consistent
 include 'gridrepo'
+include 'ssh'
+
+ensure_packages ( ['nfs-utils','autofs'] )
 
 ensure_resource('file', '/var/run/shm', {'ensure' => directory })
-file { '/etc/auto.data':
-      ensure  => present,
-      source  => $autodatalocation,
-      require => [Package['autofs'],File['/data']],
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0444',
-      notify => Service['autofs']
-}
 ensure_resource('file', '/data', {'ensure' => 'directory' })
 if str2bool("$el5chrootmounts"){
   ensure_resource('file', '/chroots', {'ensure' => 'directory' })
@@ -53,9 +47,6 @@ if str2bool("$ubuntutrustychrootmounts"){
 }
 
 ensure_resource('file', '/el5', {'ensure' => 'absent', force=>true })
-
-ensure_packages ( ['nfs-utils','autofs'] )
-
 ensure_resource ( 'file', "/etc/keytabs/", 
   { ensure => directory,
 	 	 owner   => 'root',
@@ -63,19 +54,6 @@ ensure_resource ( 'file', "/etc/keytabs/",
 	     	 mode    => '0700',
   } 
 )
-
-file {'/etc/keytabs/krb5.keytab.nfsreader':
-          source => $nfsreaderkeytab,
-          mode => 0600,
-          owner => root,
-          group=>root,
-          ensure=>present,
-          require=> File['/etc/keytabs/']
-}
-
-
-
-include 'ssh'
 
 ensure_resource ( 'file', "/network",
   {
@@ -85,7 +63,6 @@ ensure_resource ( 'file', "/network",
 	  group   => 'root',
   } 
 )
-
 
 ensure_resource ( 'file', "/network/home",
    {
@@ -160,66 +137,17 @@ ensure_resource ( 'file', "/network/software",
 autofs::automount{ autonetworksoftware: dmap=>"/etc/automount/auto.network.software", ddir=>"/-", mapsource=>"$autonetworksoftwarelocation"}
 autofs::automount{ autonetworkweb: dmap=>"/etc/automount/auto.web.server.physics.ox.ac.uk", ddir=>"/network/web", mapsource=>"$autoweblocation"}
 autofs::automount{ autonetworkhome: dmap=>"/etc/automount/auto.network.home", ddir=>'/network/home', mapsource=>"$autonetworkhomelocation" }
-#autofs::automount{ autophysics: dmap=>"/etc/automount/auto.physics", ddir=>'/physics', mapsource=>"puppet:///site_files/pp_local/auto.physics" }
 autofs::automount{ autonetworkgroup: dmap=>"/etc/automount/auto.group", ddir=>'/network/group', mapsource=>"$autogrouplocation" }
+autofs::automount{ autodata: dmap=>"/etc/auto.data", ddir=>'/data', mapsource=>"$autodatalocation" }
 
-file {'/etc/automount/auto.group.particle':
-          source => $autogroupparticleloaction,
+
+file {'/etc/keytabs/krb5.keytab.nfsreader':
+          source => $nfsreaderkeytab,
           mode => 0600,
           owner => root,
           group=>root,
           ensure=>present,
-          require=> File['/etc/automount/']
+          require=> File['/etc/keytabs/']
 }
 
-
- define autodata() 
- {
-  $dmap = '/etc/auto.data'
-  $options_keys =['--timeout', '-g' ]
-  $options_values  =[ '-120','']
-  $ddir = '/data'
-
-   case $::augeasversion {
-       '0.9.0','0.10.0', '1.0.0': { $lenspath = '/var/lib/puppet/lib/augeas/lenses' }
-        default: { $lenspath = undef }
-     }
-
-#######################################
- #Pattern based on
- #http://projects.puppetlabs.com/projects/1/wiki/puppet_augeas
-
-     augeas{"${ddir}_edit":
-
-       context   => '/files/etc/auto.master/',
-
-       load_path => $lenspath,
-       #This part changes options on an already existing line
-
-      changes   => [
-             "set *[map = '$dmap']     $ddir",
-             "set *[map = '$dmap']/map  $dmap",
-             "set *[map = '$dmap']/opt[1] ${options_keys[0]}",
-             "set *[map = '$dmap']/opt[1]/value ${options_values[0]}",
-             "set *[map = '$dmap']/opt[2] ${options_keys[1]}",
-        ]   ,
-       notify    => Service['autofs']
-     }
-     augeas{"${ddir}_change":
-       context   => '/files/etc/auto.master/',
-       load_path => $lenspath,
-       #This part changes options on an already existing line
-       changes   => [
-             "set 01   /data",
-             "set 01/map  $dmap",
-             "set 01/opt[1] ${options_keys[0]}",
-             "set 01/opt[1]/value ${options_values[0]}",
-             "set 01/opt[2] ${options_keys[1]}",
-        ]   ,
-       onlyif    => "match *[map = '$dmap'] size == 0",
-
-       notify    => Service['autofs']
-     }
-}
-autodata{ autodata: }
 }

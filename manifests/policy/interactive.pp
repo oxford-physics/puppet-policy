@@ -16,5 +16,6 @@ class applypolicy::policy::interactive
 
   $admin_package_list = [ "cifs-utils", "samba-common", "samba", "krb5-workstation" ]
   ensure_packages ( $admin_package_list  )
+
 }
 
